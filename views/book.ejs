@@ -1,38 +1,15 @@
-<%- include('layout', { user: user }) %>
-
 <div class="container mt-4">
   <a href="/" class="btn btn-secondary mb-3">&larr; Back</a>
+  <h2><%= book.title %></h2>
+  <p><%= book.author %></p>
+  <img src="<%= book.cover_url %>" class="img-fluid mb-3">
 
-  <div class="card mb-4">
-    <% if (book.cover_url) { %>
-      <img src="<%= book.cover_url %>" class="card-img-top" alt="<%= book.title %>">
-    <% } %>
-    <div class="card-body">
-      <h2><%= book.title %></h2>
-      <h5 class="text-muted">by <%= book.author %></h5>
-      <% if (book.avg_rating) { %>
-        <p><strong>Average Rating:</strong> <%= book.avg_rating %>/5</p>
-      <% } %>
-    </div>
-  </div>
-
-  <% if (user) { %>
-    <a href="/write/<%= book.id %>" class="btn btn-primary mb-4">Write a Review</a>
-  <% } else { %>
-    <p><a href="/login">Log in</a> to write a review.</p>
-  <% } %>
-
-  <h3>Reviews</h3>
-  <% if (reviews && reviews.length > 0) { %>
+  <h4>Reviews</h4>
+  <% if (reviews.length > 0) { %>
     <% reviews.forEach(r => { %>
-      <div class="card mb-3">
-        <div class="card-body">
-          <h5><%= r.title %> - <%= r.rating %>/5</h5>
-          <% if (r.contains_spoilers) { %>
-            <span class="badge bg-warning text-dark">Spoilers</span>
-          <% } %>
-          <p><%= r.body %></p>
-        </div>
+      <div class="border p-2 mb-2">
+        <strong><%= r.title %></strong> — <%= r.rating %>/5
+        <p><%= r.body %></p>
       </div>
     <% }) %>
   <% } else { %>
