@@ -1,49 +1,37 @@
 <%- include('layout', { user: user }) %>
 
-<div class="mt-4">
-  <a href="/" class="btn btn-secondary mb-3">&larr; Back to Home</a>
+<div class="container mt-4">
+  <a href="/" class="btn btn-secondary mb-3">&larr; Back</a>
 
-  <div class="card shadow-sm mb-4">
+  <div class="card mb-4">
     <% if (book.cover_url) { %>
       <img src="<%= book.cover_url %>" class="card-img-top" alt="<%= book.title %>">
-    <% } else { %>
-      <img src="/images/default-cover.jpg" class="card-img-top" alt="No cover available">
     <% } %>
     <div class="card-body">
-      <h2 class="card-title"><%= book.title %></h2>
-      <h5 class="card-subtitle text-muted mb-3">by <%= book.author %></h5>
+      <h2><%= book.title %></h2>
+      <h5 class="text-muted">by <%= book.author %></h5>
       <% if (book.avg_rating) { %>
         <p><strong>Average Rating:</strong> <%= book.avg_rating %>/5</p>
       <% } %>
     </div>
   </div>
 
-  <div class="mb-4">
-    <% if (user) { %>
-      <a href="/write/<%= book.id %>" class="btn btn-primary">Write a Review</a>
-    <% } else { %>
-      <p><a href="/login">Log in</a> to write a review.</p>
-    <% } %>
-  </div>
+  <% if (user) { %>
+    <a href="/write/<%= book.id %>" class="btn btn-primary mb-4">Write a Review</a>
+  <% } else { %>
+    <p><a href="/login">Log in</a> to write a review.</p>
+  <% } %>
 
   <h3>Reviews</h3>
   <% if (reviews && reviews.length > 0) { %>
-    <% reviews.forEach(review => { %>
-      <div class="card mb-3 shadow-sm">
+    <% reviews.forEach(r => { %>
+      <div class="card mb-3">
         <div class="card-body">
-          <h5 class="card-title"><%= review.title %></h5>
-          <p class="card-text">
-            <strong>Rating:</strong> <%= review.rating %>/5
-            <% if (review.contains_spoilers) { %>
-              <span class="badge bg-warning text-dark">Contains spoilers</span>
-            <% } %>
-          </p>
-          <p class="card-text"><%= review.body %></p>
-          <p class="card-text">
-            <small class="text-muted">
-              Posted on <%= new Date(review.created_at).toLocaleDateString() %>
-            </small>
-          </p>
+          <h5><%= r.title %> - <%= r.rating %>/5</h5>
+          <% if (r.contains_spoilers) { %>
+            <span class="badge bg-warning text-dark">Spoilers</span>
+          <% } %>
+          <p><%= r.body %></p>
         </div>
       </div>
     <% }) %>
