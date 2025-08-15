@@ -1,0 +1,44 @@
+<div class="row g-4">
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <img class="card-img-top book-cover" data-isbn="<%= book.isbn || '' %>" alt="cover">
+      <div class="card-body">
+        <h4><%= book.title %></h4>
+        <p class="text-muted mb-1"><i class="bi bi-person"></i> <%= book.author %></p>
+        <p class="text-muted"><i class="bi bi-star-fill text-warning"></i> <%= book.avg_rating || '—' %> / 5</p>
+        <% if (session && session.user) { %>
+          <a class="btn btn-sm btn-outline-primary" href="/write/<%= book.id %>">Write a review</a>
+        <% } else { %>
+          <a class="btn btn-sm btn-outline-secondary" href="/login">Login to write a review</a>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-8">
+    <h5 class="mb-3">Recent Reviews</h5>
+    <% if (!reviews.length) { %>
+      <p class="text-muted">No reviews yet.</p>
+    <% } %>
+    <div class="vstack gap-3">
+      <% reviews.forEach(r => { %>
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <strong><%= r.title %></strong>
+              <span class="text-warning"><i class="bi bi-star-fill"></i> <%= r.rating %>/5</span>
+            </div>
+            <small class="text-muted">by <%= r.user_name %> • <%= new Date(r.created_at).toLocaleDateString() %></small>
+            <% if (r.contains_spoilers) { %>
+              <div class="alert alert-warning py-1 mt-2 mb-2">Contains spoilers</div>
+            <% } %>
+            <p class="mt-2 mb-0"><%= r.body %></p>
+            <% if (session && session.user && session.user.id === r.user_id) { %>
+              <a class="btn btn-sm btn-outline-secondary mt-2" href="/edit/<%= r.id %>">Edit</a>
+            <% } %>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,31 @@
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h4 class="mb-3">Add a Book</h4>
+        <p class="text-muted">You can add any book you want to review. ISBN is optional but helps pull a cover automatically.</p>
+
+        <form id="addBookForm" class="vstack gap-3">
+          <div>
+            <label class="form-label">Title</label>
+            <input class="form-control" type="text" name="title" required />
+          </div>
+          <div>
+            <label class="form-label">Author</label>
+            <input class="form-control" type="text" name="author" required />
+          </div>
+          <div>
+            <label class="form-label">ISBN (optional)</label>
+            <input class="form-control" type="text" name="isbn" placeholder="e.g., 9780141439518" />
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary" type="submit">Add Book</button>
+            <a class="btn btn-outline-secondary" href="/">Cancel</a>
+          </div>
+        </form>
+
+        <div id="addBookMsg" class="small mt-2"></div>
+      </div>
+    </div>
+  </div>
+</div>

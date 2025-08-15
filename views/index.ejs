@@ -1,0 +1,32 @@
+<div class="card p-3 shadow-sm">
+  <form class="d-flex" method="GET" action="/">
+    <input id="searchInput" class="form-control me-2" type="search"
+           placeholder="Search by title or author"
+           name="q" value="<%= q || '' %>">
+    <button class="btn btn-outline-light bg-primary text-white">Search</button>
+  </form>
+</div>
+
+<h3 class="mt-4">Books</h3>
+<div class="row">
+  <% if (books && books.length > 0) { %>
+    <% books.forEach(book => { %>
+      <div class="col-md-3">
+        <div class="card mb-4 shadow-sm">
+          <% if (book.cover_url) { %>
+            <img src="<%= book.cover_url %>" class="card-img-top" alt="<%= book.title %>">
+          <% } else { %>
+            <img src="/images/default-cover.jpg" class="card-img-top" alt="No cover available">
+          <% } %>
+          <div class="card-body">
+            <h5 class="card-title"><%= book.title %></h5>
+            <p class="card-text"><small><%= book.author %></small></p>
+            <a href="/book/<%= book.id %>" class="btn btn-sm btn-primary">View</a>
+          </div>
+        </div>
+      </div>
+    <% }); %>
+  <% } else { %>
+    <p>No books found.</p>
+  <% } %>
+</div>

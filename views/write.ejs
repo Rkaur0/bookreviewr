@@ -1,0 +1,49 @@
+<%- include('layout', { user: user }) %>
+
+<div class="container mt-4">
+  <h2><%= review ? 'Edit Review' : 'Write a Review' %></h2>
+
+  <form id="reviewForm">
+    <% if (review) { %>
+      <input type="hidden" name="id" value="<%= review.id %>">
+    <% } %>
+    <input type="hidden" name="book_id" value="<%= bookId %>">
+
+    <!-- Rating -->
+    <div class="mb-3">
+      <label for="rating" class="form-label">Rating</label>
+      <select class="form-select" id="rating" name="rating" required>
+        <% for (let i = 1; i <= 5; i++) { %>
+          <option value="<%= i %>" <%= review && review.rating == i ? 'selected' : '' %>><%= i %> Star<%= i > 1 ? 's' : '' %></option>
+        <% } %>
+      </select>
+    </div>
+
+    <!-- Title -->
+    <div class="mb-3">
+      <label for="title" class="form-label">Review Title</label>
+      <input type="text" class="form-control" id="title" name="title"
+             value="<%= review ? review.title : '' %>" required>
+    </div>
+
+    <!-- Body -->
+    <div class="mb-3">
+      <label for="body" class="form-label">Review Text</label>
+      <textarea class="form-control" id="body" name="body" rows="5" required><%= review ? review.body : '' %></textarea>
+    </div>
+
+    <!-- Contains spoilers -->
+    <div class="form-check mb-3">
+      <input class="form-check-input" type="checkbox" id="contains_spoilers" name="contains_spoilers"
+        <%= review && review.contains_spoilers ? 'checked' : '' %>>
+      <label class="form-check-label" for="contains_spoilers">
+        Contains spoilers
+      </label>
+    </div>
+
+    <button type="submit" class="btn btn-primary"><%= review ? 'Update Review' : 'Submit Review' %></button>
+    <a href="/book/<%= bookId %>" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+
+<script src="/js/reviews.js"></script>
