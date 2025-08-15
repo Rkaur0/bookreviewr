@@ -30,11 +30,13 @@ app.use(session({
   cookie: { maxAge: 1000 * 60 * 60 * 24 }
 }));
 
+// Auth middleware
 function requireAuth(req, res, next) {
   if (req.session.user) return next();
   return res.redirect('/login');
 }
 
+// Helpers
 function computeAvgRating(bookId, cb) {
   db.get('SELECT AVG(rating) as avg FROM Reviews WHERE book_id = ?', [bookId], (err, row) => {
     if (err) return cb(err);
@@ -44,6 +46,8 @@ function computeAvgRating(bookId, cb) {
 }
 
 // ===== ROUTES =====
+
+// Home / Search
 app.get('/', (req, res) => {
   const searchQuery = req.query.q || '';
   const sql = searchQuery
@@ -65,39 +69,49 @@ app.get('/', (req, res) => {
   });
 });
 
-// ✅ FIXED: Book detail page
+// Book detail page
 app.get('/book/:id', (req, res) => {
   const bookId = req.params.id;
+
   db.get('SELECT * FROM Books WHERE id = ?', [bookId], (err, book) => {
     if (err || !book) {
-      console.error('Book not found or DB error:', err);
+      console.error('Error fetching book:', err);
       return res.status(404).send('Book not found');
     }
 
-    db.all('SELECT * FROM Reviews WHERE book_id = ? ORDER BY created_at DESC', [bookId], (err2, reviews) => {
-      if (err2) reviews = [];
-
-      db.all(
-        `SELECT t.* FROM Tags t
-         JOIN BookTags bt ON bt.tag_id = t.id
-         WHERE bt.book_id = ?`,
-        [bookId],
-        (err3, tags) => {
-          if (err3) tags = [];
-
-          res.render('book', {
-            layout: 'layout',
-            user: req.session.user,
-            book,
-            reviews: reviews || [],
-            tags: tags || []
-          });
+    db.all(
+      'SELECT r.*, u.name as user_name FROM Reviews r JOIN Users u ON r.user_id = u.id WHERE r.book_id = ? ORDER BY r.created_at DESC',
+      [bookId],
+      (err2, reviews) => {
+        if (err2) {
+          console.error('Error fetching reviews:', err2);
+          return res.status(500).send('Database error');
         }
-      );
-    });
+
+        db.all(
+          'SELECT t.* FROM Tags t JOIN BookTags bt ON bt.tag_id = t.id WHERE bt.book_id = ?',
+          [bookId],
+          (err3, tags) => {
+            if (err3) {
+              console.error('Error fetching tags:', err3);
+              return res.status(500).send('Database error');
+            }
+
+            res.render('book', {
+              layout: 'layout',
+              user: req.session.user,
+              book,
+              reviews: reviews || [],
+              tags: tags || []
+            });
+          }
+        );
+      }
+    );
   });
 });
 
+// Write review
 app.get('/write/:bookId', requireAuth, (req, res) => {
   db.get('SELECT * FROM Books WHERE id = ?', [req.params.bookId], (err, book) => {
     if (err || !book) return res.redirect('/');
@@ -105,6 +119,7 @@ app.get('/write/:bookId', requireAuth, (req, res) => {
   });
 });
 
+// Edit review
 app.get('/edit/:reviewId', requireAuth, (req, res) => {
   const id = req.params.reviewId;
   db.get('SELECT * FROM Reviews WHERE id = ?', [id], (err, review) => {
@@ -116,9 +131,11 @@ app.get('/edit/:reviewId', requireAuth, (req, res) => {
   });
 });
 
+// Auth pages
 app.get('/login', (req, res) => res.render('login', { layout: 'layout', user: req.session.user }));
 app.get('/register', (req, res) => res.render('register', { layout: 'layout', user: req.session.user }));
 
+// API: Auth
 app.post('/api/auth/register', async (req, res) => {
   const { name, email, password } = req.body;
   if (!name || !email || !password) return res.status(400).json({ error: 'Missing fields' });
@@ -150,6 +167,7 @@ app.post('/api/auth/logout', (req, res) => {
   req.session.destroy(() => res.json({ ok: true }));
 });
 
+// Reviews API
 app.post('/api/reviews', (req, res) => {
   if (!req.session.user) return res.status(401).json({ error: 'Login required' });
   const { book_id, rating, title, body, contains_spoilers } = req.body;
@@ -164,4 +182,30 @@ app.post('/api/reviews', (req, res) => {
 });
 
 app.put('/api/reviews/:id', (req, res) => {
-  if (!req.sess
+  if (!req.session.user) return res.status(401).json({ error: 'Login required' });
+  const id = req.params.id;
+  const { rating, title, body, contains_spoilers } = req.body;
+  db.get('SELECT * FROM Reviews WHERE id = ?', [id], (err, row) => {
+    if (err || !row) return res.status(404).json({ error: 'Not found' });
+    if (row.user_id !== req.session.user.id) return res.status(403).json({ error: 'Forbidden' });
+    db.run(`UPDATE Reviews SET rating = ?, title = ?, body = ?, contains_spoilers = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      [Number(rating), title, body, contains_spoilers ? 1 : 0, id],
+      (e2) => {
+        if (e2) return res.status(500).json({ error: 'DB error' });
+        computeAvgRating(row.book_id, () => res.json({ ok: true }));
+      });
+  });
+});
+
+// Health check
+app.get('/health', (req, res) => res.json({ ok: true }));
+
+// Dummy POST routes for forms
+app.post('/login', (req, res) => res.redirect('/'));
+app.post('/register', (req, res) => res.redirect('/'));
+
+// Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log('BookReviewr running on http://localhost:' + PORT);
+});
