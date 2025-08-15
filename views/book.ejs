@@ -1,44 +1,61 @@
-<div class="row g-4">
-  <div class="col-md-4">
-    <div class="card shadow-sm">
-      <img class="card-img-top book-cover" data-isbn="<%= book.isbn || '' %>" alt="cover">
-      <div class="card-body">
-        <h4><%= book.title %></h4>
-        <p class="text-muted mb-1"><i class="bi bi-person"></i> <%= book.author %></p>
-        <p class="text-muted"><i class="bi bi-star-fill text-warning"></i> <%= book.avg_rating || '—' %> / 5</p>
-        <% if (session && session.user) { %>
-          <a class="btn btn-sm btn-outline-primary" href="/write/<%= book.id %>">Write a review</a>
-        <% } else { %>
-          <a class="btn btn-sm btn-outline-secondary" href="/login">Login to write a review</a>
-        <% } %>
-      </div>
-    </div>
-  </div>
+<%- include('layout', { user: user }) %>
 
-  <div class="col-md-8">
-    <h5 class="mb-3">Recent Reviews</h5>
-    <% if (!reviews.length) { %>
-      <p class="text-muted">No reviews yet.</p>
-    <% } %>
-    <div class="vstack gap-3">
-      <% reviews.forEach(r => { %>
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <div class="d-flex justify-content-between">
-              <strong><%= r.title %></strong>
-              <span class="text-warning"><i class="bi bi-star-fill"></i> <%= r.rating %>/5</span>
-            </div>
-            <small class="text-muted">by <%= r.user_name %> • <%= new Date(r.created_at).toLocaleDateString() %></small>
-            <% if (r.contains_spoilers) { %>
-              <div class="alert alert-warning py-1 mt-2 mb-2">Contains spoilers</div>
-            <% } %>
-            <p class="mt-2 mb-0"><%= r.body %></p>
-            <% if (session && session.user && session.user.id === r.user_id) { %>
-              <a class="btn btn-sm btn-outline-secondary mt-2" href="/edit/<%= r.id %>">Edit</a>
-            <% } %>
-          </div>
-        </div>
-      <% }) %>
+<div class="card shadow-sm p-4">
+  <div class="row">
+    <div class="col-md-4">
+      <% if (book.cover_url) { %>
+        <img src="<%= book.cover_url %>" alt="<%= book.title %>" class="img-fluid rounded">
+      <% } else { %>
+        <img src="/images/default-cover.jpg" alt="No cover available" class="img-fluid rounded">
+      <% } %>
+    </div>
+    <div class="col-md-8">
+      <h2><%= book.title %></h2>
+      <p><strong>Author:</strong> <%= book.author %></p>
+      <% if (book.avg_rating) { %>
+        <p><strong>Average Rating:</strong> <%= book.avg_rating %> / 5</p>
+      <% } else { %>
+        <p><em>No ratings yet</em></p>
+      <% } %>
+
+      <% if (tags && tags.length > 0) { %>
+        <p>
+          <strong>Tags:</strong>
+          <% tags.forEach((tag, idx) => { %>
+            <span class="badge bg-primary"><%= tag.name %></span>
+          <% }) %>
+        </p>
+      <% } %>
+
+      <% if (user) { %>
+        <a href="/write/<%= book.id %>" class="btn btn-success mt-2">Write a Review</a>
+      <% } else { %>
+        <p class="mt-2"><a href="/login">Log in</a> to write a review</p>
+      <% } %>
     </div>
   </div>
 </div>
+
+<hr>
+
+<h3>Reviews</h3>
+<% if (reviews && reviews.length > 0) { %>
+  <% reviews.forEach(review => { %>
+    <div class="card my-3 shadow-sm">
+      <div class="card-body">
+        <h5><%= review.title %></h5>
+        <p><strong>Rating:</strong> <%= review.rating %> / 5</p>
+        <% if (review.contains_spoilers) { %>
+          <p><em>Spoilers hidden</em></p>
+        <% } else { %>
+          <p><%= review.body %></p>
+        <% } %>
+        <% if (user && user.id === review.user_id) { %>
+          <a href="/edit/<%= review.id %>" class="btn btn-warning btn-sm">Edit</a>
+        <% } %>
+      </div>
+    </div>
+  <% }) %>
+<% } else { %>
+  <p>No reviews yet. Be the first to review this book!</p>
+<% } %>
