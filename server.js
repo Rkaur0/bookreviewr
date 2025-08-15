@@ -65,12 +65,35 @@ app.get('/', (req, res) => {
   });
 });
 
+// ✅ FIXED: Book detail page
 app.get('/book/:id', (req, res) => {
   const bookId = req.params.id;
   db.get('SELECT * FROM Books WHERE id = ?', [bookId], (err, book) => {
-    if (err || !book) return res.redirect('/');
-    db.all('SELECT * FROM Reviews WHERE book_id = ? ORDER BY created_at DESC', [bookId], (e2, reviews) => {
-      res.render('book', { layout: 'layout', user: req.session.user, book, reviews: reviews || [] });
+    if (err || !book) {
+      console.error('Book not found or DB error:', err);
+      return res.status(404).send('Book not found');
+    }
+
+    db.all('SELECT * FROM Reviews WHERE book_id = ? ORDER BY created_at DESC', [bookId], (err2, reviews) => {
+      if (err2) reviews = [];
+
+      db.all(
+        `SELECT t.* FROM Tags t
+         JOIN BookTags bt ON bt.tag_id = t.id
+         WHERE bt.book_id = ?`,
+        [bookId],
+        (err3, tags) => {
+          if (err3) tags = [];
+
+          res.render('book', {
+            layout: 'layout',
+            user: req.session.user,
+            book,
+            reviews: reviews || [],
+            tags: tags || []
+          });
+        }
+      );
     });
   });
 });
@@ -141,25 +164,4 @@ app.post('/api/reviews', (req, res) => {
 });
 
 app.put('/api/reviews/:id', (req, res) => {
-  if (!req.session.user) return res.status(401).json({ error: 'Login required' });
-  const id = req.params.id;
-  const { rating, title, body, contains_spoilers } = req.body;
-  db.get('SELECT * FROM Reviews WHERE id = ?', [id], (err, row) => {
-    if (err || !row) return res.status(404).json({ error: 'Not found' });
-    if (row.user_id !== req.session.user.id) return res.status(403).json({ error: 'Forbidden' });
-    db.run(`UPDATE Reviews SET rating = ?, title = ?, body = ?, contains_spoilers = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-      [Number(rating), title, body, contains_spoilers ? 1 : 0, id],
-      (e2) => {
-        if (e2) return res.status(500).json({ error: 'DB error' });
-        computeAvgRating(row.book_id, () => res.json({ ok: true }));
-      });
-  });
-});
-
-app.get('/health', (req, res) => res.json({ ok: true }));
-
-app.post('/login', (req, res) => res.redirect('/'));
-app.post('/register', (req, res) => res.redirect('/'));
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('BookReviewr running on http://localhost:' + PORT));
+  if (!req.sess
